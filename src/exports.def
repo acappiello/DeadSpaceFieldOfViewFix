@@ -1,0 +1,3 @@
+LIBRARY DeadSpaceFovFix
+EXPORTS
+    DirectInput8Create @1
