@@ -1,0 +1,49 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install MinGW-w64, Make, and Zip
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-i686 make zip
+
+      - name: Build DLLs
+        run: make
+
+      - name: Package release archive
+        run: |
+          mkdir -p dist
+          cp build/DeadSpaceFovFix.dll dist/
+          cp build/dinput8.dll dist/
+          cp DeadSpaceFovFix.ini dist/
+          cp README.md dist/
+          cd dist
+          zip -r "../DeadSpaceFovFix-${GITHUB_REF_NAME}.zip" .
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeadSpaceFovFix-${{ github.ref_name }}
+          path: DeadSpaceFovFix-${{ github.ref_name }}.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DeadSpaceFovFix-${{ github.ref_name }}.zip
+          generate_release_notes: true
